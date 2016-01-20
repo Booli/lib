@@ -17,6 +17,7 @@
 source $SRC/lib/general.sh					# General functions
 
 # compress and remove old logs
+mkdir -p $DEST/debug
 (cd $DEST/debug && tar -czf logs-$(date +"%d_%m_%Y-%H_%M_%S").tgz *.log) > /dev/null 2>&1
 rm -f $DEST/debug/*.log > /dev/null 2>&1
 
@@ -30,12 +31,18 @@ for i in "$@"; do
 	fi
 done
 
-if [ "$PROGRESS_DISPLAY" = "none" ]; then
+if [[ $PROGRESS_DISPLAY == none ]]; then
 	OUTPUT_VERYSILENT=yes;
-elif [ "$PROGRESS_DISPLAY" != "plain" ]; then
+elif [[ $PROGRESS_DISPLAY != plain ]]; then
 	OUTPUT_DIALOG=yes;
 fi
-if [ "$PROGRESS_LOG_TO_FILE" != "yes" ]; then unset PROGRESS_LOG_TO_FILE; fi
+if [[ $PROGRESS_LOG_TO_FILE != yes ]]; then unset PROGRESS_LOG_TO_FILE; fi
+
+if [[ $USE_CCACHE != no ]]; then
+	CCACHE=ccache
+else
+	CCACHE=""
+fi
 
 # compile.sh version checking
 ver1=$(grep '^# VERSION' "$SRC/compile.sh" | cut -d'=' -f2)
@@ -181,7 +188,8 @@ HOST="$BOARD"
 
 # Load libraries
 source $SRC/lib/configuration.sh			# Board configuration
-source $SRC/lib/debootstrap.sh 				# System specific install
+source $SRC/lib/debootstrap.sh				# System specific install (old)
+source $SRC/lib/debootstrap-ng.sh 			# System specific install (experimental)
 source $SRC/lib/distributions.sh 			# System specific install
 source $SRC/lib/patching.sh 				# Source patching
 source $SRC/lib/boards.sh 				# Board specific install
@@ -209,13 +217,6 @@ else
 	CTHREADS="-j${CPUS}";
 fi
 
-# Use C compiler cache
-if [ "$USE_CCACHE" = "yes" ]; then 
-	CCACHE="ccache"; 
-else 
-	CCACHE=""; 
-fi
-
 # display what we do	
 if [ "$KERNEL_ONLY" == "yes" ]; then
 	display_alert "Compiling kernel" "$BOARD" "info"
@@ -226,7 +227,7 @@ fi
 # sync clock
 if [ "$SYNC_CLOCK" != "no" ]; then
 	display_alert "Syncing clock" "host" "info"
-	ntpdate -s time.ijs.si
+	eval ntpdate -s ${NTP_SERVER:- time.ijs.si}
 fi
 start=`date +%s`
 
@@ -282,34 +283,39 @@ done
 
 [[ -n "$RELEASE" ]] && create_board_package
 
-if [ "$KERNEL_ONLY" == "yes" ]; then
+if [[ $KERNEL_ONLY != yes ]]; then
+	if [[ $EXPERIMENTAL_DEBOOTSTRAP == yes ]]; then
+		debootstrap_ng
+	else
+	
+		# create or use prepared root file-system
+		custom_debootstrap
+
+		# add kernel to the image
+		install_kernel
+
+		# install board specific applications
+		install_distribution_specific
+		install_board_specific
+
+		# install desktop
+		if [ "$BUILD_DESKTOP" = "yes" ]; then
+			install_desktop
+		fi
+
+		# install external applications
+		if [ "$EXTERNAL" = "yes" ]; then
+			install_external_applications
+		fi
+
+		# closing image
+		closing_image
+	fi
+
+else
 	display_alert "Kernel building done" "@host" "info"
 	display_alert "Target directory" "$DEST/debs/" "info"
 	display_alert "File name" "$CHOOSEN_KERNEL" "info"
-else
-	
-	# create or use prepared root file-system
-	custom_debootstrap
-
-	# add kernel to the image
-	install_kernel
-
-	# install board specific applications
-	install_distribution_specific
-	install_board_specific
-
-	# install desktop
-	if [ "$BUILD_DESKTOP" = "yes" ]; then
-		install_desktop
-	fi
-
-	# install external applications
-	if [ "$EXTERNAL" = "yes" ]; then
-		install_external_applications
-	fi
-
-	# closing image
-	closing_image
 fi
 
 end=`date +%s`

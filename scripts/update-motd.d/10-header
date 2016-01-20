@@ -1,0 +1,11 @@
+#!/bin/bash
+export TERM=linux
+export VDPAU_DRIVER=sunxi 
+clear
+DISTROID=$(lsb_release -s -i)
+DISTROCODE=$(lsb_release -s -c)
+KERNELID=$(uname -r) 
+toilet -f standard -F metal  $(hostname)
+echo -e  "Welcome to \e[0;91mARMBIAN\x1B[0m ($DISTROID $DISTROCODE $KERNELID)" 
+echo "" 
+ 
