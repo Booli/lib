@@ -48,20 +48,13 @@ install_board_specific (){
 	fi
 
 	# Odroid
-	if [[ $BOARD == "odroidxu4" ]] ; then
+	if [[ $BOARD == "odroidxu" ]] ; then
 		
 		echo "blacklist ina231_sensor" > $DEST/cache/sdcard/etc/modprobe.d/blacklist-odroid.conf
-		chroot $DEST/cache/sdcard /bin/bash -c "apt-get -y -qq remove lirc >/dev/null 2>&1"
+		chroot $DEST/cache/sdcard /bin/bash -c "apt-get -y -qq remove lirc"		
 		
 	fi	
 
-	# Armada
-	if [[ $BOARD == "armada" ]] ; then
-		
-		chroot $DEST/cache/sdcard /bin/bash -c "apt-get -y -qq remove lirc linux-sound-base alsa-base alsa-utils bluez>/dev/null 2>&1"
-		
-	fi	
-	
 	# Udoo
 	if [[ $BOARD == "udoo" ]] ; then		
 
@@ -124,8 +117,6 @@ install_board_specific (){
 		cp $SRC/lib/config/boot-cubox.cmd $DEST/cache/sdcard/boot/boot.cmd
 	elif [[ $BOARD == guitar* ]]; then
 		cp $SRC/lib/config/boot-guitar.cmd $DEST/cache/sdcard/boot/boot.cmd
-	elif [[ $BOARD == armada* ]]; then
-		cp $SRC/lib/config/boot-marvell.cmd $DEST/cache/sdcard/boot/boot.cmd
 	elif [[ $BOARD == odroid* ]]; then
 		cp $SRC/lib/config/boot-odroid.ini $DEST/cache/sdcard/boot/boot.ini	
 	else
@@ -181,7 +172,7 @@ install_kernel (){
 
 	# create modules file
 	IFS=" "
-	if [[ $BRANCH == *next* || $BRANCH == *dev* ]];then
+	if [[ $BRANCH == *next* ]];then
 		for word in $MODULES_NEXT; do 
 			echo $word >> $DEST/cache/sdcard/etc/modules; 
 		done

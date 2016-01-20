@@ -27,18 +27,13 @@
 	
 	# common options
 
-	REVISION="4.83" # all boards have same revision
-	ROOTPWD="1234" # Must be changed @first login
-	MAINTAINER="Igor Pecovnik" # deb signature
-	MAINTAINERMAIL="igor.pecovnik@****l.com" # deb signature
-	GPG_PASS="" # signing password
+	REVISION="4.81" # all boards have same revision
 	SDSIZE="4000" # SD image size in MB
 	TZDATA=`cat /etc/timezone` # Timezone for target is taken from host or defined here.
 	USEALLCORES="yes" # Use all CPU cores for compiling
 	SYSTEMD="no" # Enable or disable systemd on Jessie in debootstrap process 
 	OFFSET="1" # Bootloader space in MB (1 x 2048 = default)
 	BOOTSIZE="0" # Mb size of boot partition
-	EXIT_PATCHING_ERROR="" # exit patching if failed
 	SERIALCON="ttyS0"
 	MISC1="https://github.com/linux-sunxi/sunxi-tools.git" # Allwinner fex compiler / decompiler	
 	MISC1_DIR="sunxi-tools"	# local directory
@@ -266,11 +261,11 @@
 			MODULES_NEXT=""
 			SERIALCON="ttyS3"
 		;;
-
-		odroidxu4)#enabled
+		
+		odroidxu)#enabled
 			#description Exynos5422 XU3/XU4 octa core
-			#build 1
-			LINUXFAMILY="odroidxu4"
+			#build 3
+			LINUXFAMILY="odroidxu"
 			BOOTSIZE="16"
 			BOOTCONFIG="odroid_config"
 			MODULES="bonding"
@@ -278,26 +273,6 @@
 			SERIALCON="ttySAC2"
 		;;
 
-		toradex)#enabled
-			#description Freescale iMx
-			#build 1wip
-			LINUXFAMILY="toradex"
-			BOOTCONFIG="colibri_imx6_defconfig"
-			MODULES=""
-			MODULES_NEXT=""
-			SERIALCON="ttymxc0"
-		;;
-		
-		armada)#enabled
-			#description Marvell Armada 38x
-			#build 6wip
-			LINUXFAMILY="marvell"
-			BOOTCONFIG="armada_38x_clearfog_config"
-			MODULES=""
-			MODULES_NEXT=""
-			SERIALCON="ttyS0"
-		;;
-		
 		*) echo "Board configuration not found"
 			exit
 		;;
@@ -320,7 +295,7 @@
 			KERNEL_NEXT_BRANCH="v"`wget -qO-  https://www.kernel.org/finger_banner | grep "The latest st" | awk '{print $NF}' | head -1`
 			KERNEL_NEXT_SOURCE="linux-vanilla"
 			KERNEL_DEV='git://git.kernel.org/pub/scm/linux/kernel/git/stable/linux-stable.git'
-			[ "$USE_MAINLINE_GOOGLE_MIRROR" = "yes" ] && KERNEL_DEV='https://kernel.googlesource.com/pub/scm/linux/kernel/git/stable/linux-stable'
+			[ "$USE_MAINLINE_GOOGLE_MIRROR" = "yes" ] && KERNEL_NEXT='https://kernel.googlesource.com/pub/scm/linux/kernel/git/stable/linux-stable'
 			KERNEL_DEV_BRANCH=""
 			KERNEL_DEV_SOURCE="linux-vanilla"
 			# U-boot
@@ -335,7 +310,7 @@
 			UBOOT_DEV_SOURCE=$UBOOT_DEFAULT_SOURCE
 		;;
 	
-		odroidxu4)
+		odroidxu)
 			KERNEL_DEFAULT='https://github.com/hardkernel/linux'
 			KERNEL_DEFAULT_BRANCH="odroidxu3-3.10.y"
 			KERNEL_DEFAULT_SOURCE="linux-odroidxu"
@@ -420,44 +395,6 @@
 			UBOOT_DEV_SOURCE=$UBOOT_DEFAULT_SOURCE
 		;;	
 		
-		toradex)
-			KERNEL_DEFAULT="git://git.toradex.com/linux-toradex.git"
-			KERNEL_DEFAULT_BRANCH="toradex_imx_3.14.28_1.0.0_ga"
-			KERNEL_DEFAULT_SOURCE="linux-toradex"
-			UBOOT_DEFAULT="git://git.toradex.com/u-boot-toradex.git"
-			UBOOT_DEFAULT_BRANCH="2015.04-toradex"
-			UBOOT_DEFAULT_SOURCE="u-boot-toradex"
-			UBOOT_NEXT=$UBOOT_DEFAULT
-			UBOOT_NEXT_BRANCH=$UBOOT_DEFAULT_BRANCH
-			UBOOT_NEXT_SOURCE=$UBOOT_DEFAULT_SOURCE
-			UBOOT_DEV=$UBOOT_DEFAULT
-			UBOOT_DEV_BRANCH=$UBOOT_DEFAULT_BRANCH
-			UBOOT_DEV_SOURCE=$UBOOT_DEFAULT_SOURCE
-		;;	
-		
-		marvell)
-			KERNEL_DEFAULT="https://github.com/SolidRun/linux-armada38x"
-			KERNEL_DEFAULT_BRANCH="linux-3.10.70-15t1-clearfog"
-			KERNEL_DEFAULT_SOURCE="linux-armada"
-			KERNEL_NEXT='git://git.kernel.org/pub/scm/linux/kernel/git/stable/linux-stable.git'
-			[ "$USE_MAINLINE_GOOGLE_MIRROR" = "yes" ] && KERNEL_NEXT='https://kernel.googlesource.com/pub/scm/linux/kernel/git/stable/linux-stable'
-			KERNEL_NEXT_BRANCH="v"`wget -qO-  https://www.kernel.org/finger_banner | grep "The latest st" | awk '{print $NF}' | head -1`
-			KERNEL_NEXT_SOURCE="linux-vanilla"
-			KERNEL_DEV='git://git.kernel.org/pub/scm/linux/kernel/git/stable/linux-stable.git'
-			[ "$USE_MAINLINE_GOOGLE_MIRROR" = "yes" ] && KERNEL_DEV='https://kernel.googlesource.com/pub/scm/linux/kernel/git/stable/linux-stable'
-			KERNEL_DEV_BRANCH=""
-			KERNEL_DEV_SOURCE="linux-vanilla"
-			UBOOT_DEFAULT="https://github.com/SolidRun/u-boot-armada38x"
-			UBOOT_DEFAULT_BRANCH="u-boot-2013.01-15t1-clearfog"
-			UBOOT_DEFAULT_SOURCE="u-boot-armada"
-			UBOOT_NEXT=$UBOOT_DEFAULT
-			UBOOT_NEXT_BRANCH=$UBOOT_DEFAULT_BRANCH
-			UBOOT_NEXT_SOURCE=$UBOOT_DEFAULT_SOURCE
-			UBOOT_DEV=$UBOOT_DEFAULT
-			UBOOT_DEV_BRANCH=$UBOOT_DEFAULT_BRANCH
-			UBOOT_DEV_SOURCE=$UBOOT_DEFAULT_SOURCE
-		;;	
-		
 		*) echo "Defaults not found"
 			exit
 		;;
@@ -482,7 +419,7 @@
 	
 	# For user override	
 	if [[ -f "$SRC/userpatches/lib.config" ]]; then 
-		display_alert "Using user configuration override" "userpatches/lib.config" "info"
+		display_alert "Using user configuration override" "$SRC/userpatches/lib.config" "info"
 		source $SRC/userpatches/lib.config
 	fi
 	

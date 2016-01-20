@@ -34,8 +34,8 @@ cleaning()
 {
 	case $1 in
 		"make")	# clean u-boot and kernel sources
-		[ -d "$SOURCES/$BOOTSOURCEDIR" ] && display_alert "Cleaning" "$SOURCES/$BOOTSOURCEDIR" "info" && cd $SOURCES/$BOOTSOURCEDIR && make -s ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- clean >/dev/null 2>&1
-		[ -d "$SOURCES/$LINUXSOURCEDIR" ] && display_alert "Cleaning" "$SOURCES/$LINUXSOURCEDIR" "info" && cd $SOURCES/$LINUXSOURCEDIR && make -s ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- clean >/dev/null 2>&1
+		[ -d "$SOURCES/$BOOTSOURCEDIR" ] && display_alert "Cleaning" "$SOURCES/$BOOTSOURCEDIR" "info" && cd $SOURCES/$BOOTSOURCEDIR && make -s ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- clean
+		[ -d "$SOURCES/$LINUXSOURCEDIR" ] && display_alert "Cleaning" "$SOURCES/$LINUXSOURCEDIR" "info" && cd $SOURCES/$LINUXSOURCEDIR && make -s ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- clean
 		;;
 
 		"debs") # delete output/debs
@@ -80,9 +80,8 @@ if [ -d "$SOURCES/$2/$GITHUBSUBDIR" ]; then
 	PULL=$(git pull)
 else	
 	if [[ -n $3 && -n "$(git ls-remote $1 | grep "$tag")" ]]; then	
-		display_alert "... creating a shallow clone" "$2 $3" "info"		
-		# Toradex git's doesn't support shallow clone. Need different solution than this.
-		git clone -n $1 $SOURCES/$2/$GITHUBSUBDIR -b $3 --depth 1 || git clone -n $1 $SOURCES/$2/$GITHUBSUBDIR -b $3 
+		display_alert "... creating a shallow clone" "$2 $3" "info"
+		git clone -n $1 $SOURCES/$2/$GITHUBSUBDIR -b $3 --depth 1
 		cd $SOURCES/$2/$GITHUBSUBDIR		
 		git checkout -q $3
 	else
@@ -277,48 +276,41 @@ prepare_host() {
 
 	display_alert "Preparing" "host" "info"
 
-	if [[ $(dpkg --print-architecture) == armhf ]]; then
-		display_alert "Running this tool on board itself is not supported" "..." "err"
-		display_alert "Please read documentation to set up proper compilation environment" "..." "err"
-		display_alert "http://www.armbian.com/using-armbian-tools/" "..." "err"
-		exit 1
-	fi
-
 	# dialog may be used to display progress
-	if [[ $(dpkg-query -W -f='${db:Status-Abbrev}\n' dialog 2>/dev/null) != *ii* ]]; then
+	if [[ "$(dpkg-query -W -f='${db:Status-Abbrev}\n' dialog 2>/dev/null)" != *ii* ]]; then
 		display_alert "Installing package" "dialog" "info"
 		apt-get install -qq -y --no-install-recommends dialog >/dev/null 2>&1
 	fi
 
 	# wget is needed
-	if [[ $(dpkg-query -W -f='${db:Status-Abbrev}\n' wget 2>/dev/null) != *ii* ]]; then
+	if [[ "$(dpkg-query -W -f='${db:Status-Abbrev}\n' wget 2>/dev/null)" != *ii* ]]; then
 		display_alert "Installing package" "wget" "info"
 		apt-get install -qq -y --no-install-recommends wget >/dev/null 2>&1
 	fi
 
 	# need lsb_release to decide what to install
-	if [[ $(dpkg-query -W -f='${db:Status-Abbrev}\n' lsb-release 2>/dev/null) != *ii* ]]; then
+	if [[ "$(dpkg-query -W -f='${db:Status-Abbrev}\n' lsb-release 2>/dev/null)" != *ii* ]]; then
 		display_alert "Installing package" "lsb-release" "info"
 		apt-get install -qq -y --no-install-recommends lsb-release >/dev/null 2>&1
 	fi
 
 	# packages list for host
 	PAK="aptly ca-certificates device-tree-compiler pv bc lzop zip binfmt-support build-essential ccache debootstrap ntpdate pigz \
-	gawk gcc-arm-linux-gnueabihf gcc-arm-linux-gnueabi qemu-user-static u-boot-tools uuid-dev zlib1g-dev unzip libusb-1.0-0-dev ntpdate \
-	parted pkg-config libncurses5-dev whiptail debian-keyring debian-archive-keyring f2fs-tools libfile-fcntllock-perl rsync"
+	gawk gcc-arm-linux-gnueabihf qemu-user-static u-boot-tools uuid-dev zlib1g-dev unzip libusb-1.0-0-dev ntpdate \
+	parted pkg-config libncurses5-dev whiptail debian-keyring debian-archive-keyring f2fs-tools libfile-fcntllock-perl"
 
 	# warning: apt-cacher-ng will fail if installed and used both on host and in container/chroot environment with shared network
 	# set NO_APT_CACHER=yes to prevent installation errors in such case
-	if [[ $NO_APT_CACHER != yes ]]; then PAK="$PAK apt-cacher-ng"; fi
+	if [ "$NO_APT_CACHER" != "yes" ]; then PAK="$PAK apt-cacher-ng"; fi
 
 	local codename=$(lsb_release -sc)
 	if [[ $codename == "" || "jessie trusty wily" != *"$codename"* ]]; then
 		display_alert "Host system support was not tested" "${codename:-(unknown)}" "wrn"
 	fi
 
-	if [[ $codename == jessie ]]; then
-		PAK="$PAK crossbuild-essential-armhf crossbuild-essential-armel";
-		if [[ ! -f /etc/apt/sources.list.d/crosstools.list ]]; then
+	if [ "$codename" = "jessie" ]; then
+		PAK="$PAK crossbuild-essential-armhf";
+		if [ ! -f "/etc/apt/sources.list.d/crosstools.list" ]; then
 			display_alert "Adding repository for jessie" "cross-tools" "info"
 			dpkg --add-architecture armhf > /dev/null 2>&1
 			echo 'deb http://emdebian.org/tools/debian/ jessie main' > /etc/apt/sources.list.d/crosstools.list
@@ -326,18 +318,16 @@ prepare_host() {
 		fi
 	fi
 
-	if [[ $codename == trusty ]]; then
-		PAK="$PAK libc6-dev-armhf-cross libc6-dev-armel-cross";
-		if [[ ! -f /etc/apt/sources.list.d/aptly.list ]]; then
+	if [ "$codename" = "trusty" ]; then
+		PAK="$PAK libc6-dev-armhf-cross";
+		if [ ! -f "/etc/apt/sources.list.d/aptly.list" ]; then
 			display_alert "Adding repository for trusty" "aptly" "info"
 			echo 'deb http://repo.aptly.info/ squeeze main' > /etc/apt/sources.list.d/aptly.list
 			apt-key adv --keyserver keys.gnupg.net --recv-keys E083A3782A194991
 		fi
 	fi
 
-	if [[ $codename == wily || $codename == xenial ]]; then
-		PAK="$PAK gcc-4.9-arm-linux-gnueabihf gcc-4.9-arm-linux-gnueabi libc6-dev-armhf-cross libc6-dev-armel-cross"
-	fi
+	if [ "$codename" = "wily" ]; then PAK="$PAK gcc-4.9-arm-linux-gnueabihf libc6-dev-armhf-cross"; fi
 
 	local deps=()
 	local installed=$(dpkg-query -W -f '${db:Status-Abbrev}|${binary:Package}\n' '*' 2>/dev/null | grep '^ii' | awk -F '|' '{print $2}' | cut -d ':' -f 1)
@@ -347,7 +337,7 @@ prepare_host() {
 		if [ "$?" -ne "0" ]; then deps+=("$packet"); fi
 	done
 
-	if [[ ${#deps[@]} -gt 0 ]]; then
+	if [ "${#deps[@]}" -gt "0" ]; then
 		eval '( apt-get update; apt-get -y --no-install-recommends install "${deps[@]}" )' \
 			${PROGRESS_LOG_TO_FILE:+' | tee -a $DEST/debug/output.log'} \
 			${OUTPUT_DIALOG:+' | dialog --backtitle "$backtitle" --progressbox "Installing ${#deps[@]} host dependencies..." 20 80'} \
@@ -371,11 +361,10 @@ prepare_host() {
 	echo 'They will be automatically included if placed here!' >> $SRC/userpatches/readme.txt
 
 	# legacy kernel compilation needs cross-gcc version 4.9 or lower
-	# gcc-arm-linux-gnueabi(hf) installs gcc version 5 by default on wily
-	if [[ $codename == wily || $codename == xenial ]]; then
-		# hard float
+	# gcc-arm-linux-gnueabihf installs gcc version 5 by default on wily
+	if [ "$codename" = "wily" ]; then
 		local GCC=$(which arm-linux-gnueabihf-gcc)
-		while [[ -L $GCC ]]; do
+		while [ -L "$GCC" ]; do
 			GCC=$(readlink "$GCC")
 		done
 		local version=$(basename "$GCC" | awk -F '-' '{print $NF}')
@@ -389,23 +378,6 @@ prepare_host() {
 				--slave /usr/bin/arm-linux-gnueabihf-gcov arm-linux-gnueabihf-gcov /usr/bin/arm-linux-gnueabihf-gcov-5
 
 			update-alternatives --set arm-linux-gnueabihf-gcc /usr/bin/arm-linux-gnueabihf-gcc-4.9
-		fi
-		# soft float
-		GCC=$(which arm-linux-gnueabi-gcc)
-		while [[ -L $GCC ]]; do
-			GCC=$(readlink "$GCC")
-		done
-		version=$(basename "$GCC" | awk -F '-' '{print $NF}')
-		if (( $(echo "$version > 4.9" | bc -l) )); then
-			update-alternatives --install /usr/bin/arm-linux-gnueabi-gcc arm-linux-gnueabi-gcc /usr/bin/arm-linux-gnueabi-gcc-4.9 10 \
-				--slave /usr/bin/arm-linux-gnueabi-cpp arm-linux-gnueabi-cpp /usr/bin/arm-linux-gnueabi-cpp-4.9 \
-				--slave /usr/bin/arm-linux-gnueabi-gcov arm-linux-gnueabi-gcov /usr/bin/arm-linux-gnueabi-gcov-4.9
-
-			update-alternatives --install /usr/bin/arm-linux-gnueabi-gcc arm-linux-gnueabi-gcc /usr/bin/arm-linux-gnueabi-gcc-5 11 \
-				--slave /usr/bin/arm-linux-gnueabi-cpp arm-linux-gnueabi-cpp /usr/bin/arm-linux-gnueabi-cpp-5 \
-				--slave /usr/bin/arm-linux-gnueabi-gcov arm-linux-gnueabi-gcov /usr/bin/arm-linux-gnueabi-gcov-5
-
-			update-alternatives --set arm-linux-gnueabi-gcc /usr/bin/arm-linux-gnueabi-gcc-4.9
 		fi
 	fi
 }
