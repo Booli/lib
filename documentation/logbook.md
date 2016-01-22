@@ -1,5 +1,20 @@
 # Release history
 
+**v5.00 / x.y.2015** NOT RELEASED YET!
+
+- Vanilla kernel for Allwinner based boards upgraded to 4.4
+- Allwinner audio driver playback and capture on kernel 4.4, [UAS](http://linux-sunxi.org/USB/UAS), USB OTG, battery readings,  
+- added Marvel Armada kernel 3.10.94, 4.3.3, 4.4 and patches for changing mPCI to SATA
+- added Cubox / Hummingboard kernel 4.4
+- firstrun does autoreboot only if needed: wheezy and some legacy kernels.
+- [added motd](http://forum.armbian.com/index.php/topic/602-new-motd-for-ubuntudebian/#entry4223) to /etc/updated.motd ... redesign, added battery info for Allwinner boards, bugfix, coloring
+- fixed temperature reading on Cubox / Hummingboard legacy kernel
+- fixed FB turbo building on Allwinner
+- fixed USB boot, added PWM on Vanilla
+- readded USB sound
+- added [A13 Olimex SOM](https://www.olimex.com/Products/SOM/A13/A13-SOM-512/)
+- added [LIRC GPIO receive and send driver](https://github.com/igorpecovnik/lib/issues/135) for legacy Allwinner
+
 **v4.81 / 28.12.2015**
 
 - complete build script rework

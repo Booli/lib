@@ -1,13 +1,37 @@
 # What to download?
 
-Each board is fully supported with three basic system options: Debian Wheezy, Jessie and Ubuntu Trusty desktop build per board.
+Each board is fully supported with up to **three basic system** options: 
+	
+- Debian Wheezy
+- Debian Jessie 
+- Ubuntu Trusty
 
-# Which kernel to use?
+Some boards also have a desktop version of Ubuntu or Jessie.
 
-All stable kernels are production ready, but you should use them for different purpuses:
+# Legacy or Vanilla?
 
- * for headless server or light desktop operations use vanilla kernel (linux-image-next-[kernelfamily](http://forum.armbian.com/index.php/topic/211-kernel-update-procedure-has-been-changed/))  
- * for using video acceleration, audio, IR, NAND, ... you should stick to legacy (linux-image-[kernelfamily](http://forum.armbian.com/index.php/topic/211-kernel-update-procedure-has-been-changed/))
+Both kernels are stable and production ready, but you should use them for different purpuses since their basic support differ:
+
+ * for headless server or light desktop operations use vanilla kernel
+ * for using video acceleration, NAND, ... you should stick to legacy
+
+# How to check download authenticity?
+
+All our images are digitally signed and therefore it's possible to check theirs authentication. You need to unzip the download package and issue those commands (Linux):
+
+	# download my public key from the database
+	gpg --keyserver pgp.mit.edu --recv-key 9F0E78D5
+	gpg --verify Armbian_4.83_Armada_Debian_jessie_3.10.94.raw.asc
+	
+	# proper respond
+	gpg: Signature made sob 09 jan 2016 15:01:03 CET using RSA key ID 9F0E78D5
+	gpg: Good signature from "Igor Pecovnik (Ljubljana, Slovenia) <igor.++++++++++++@gmail.com>"	
+	
+	# wrong repond. Not genuine Armbian image!
+	gpg: Signature made Sun 03 Jan 2016 11:46:25 AM CET using RSA key ID 9F0E78D5
+	gpg: BAD signature from "Igor Pecovnik (Ljubljana, Slovenia) <igor.++++++++++++@gmail.com>"
+
+It is safe to ignore WARNING: This key is not certified with a trusted signature!
 
 # How to prepare SD card?
 
@@ -22,7 +46,7 @@ Make sure you use **good & reliable** SD card. If you encounter boot troubles, c
 
 # How to boot?
 
-Insert SD card into a slot and power the board. First boot takes around 3 minutes than it reboots and you will need to wait another one minute to login. This delay is because system updates package list and creates 128Mb emergency SWAP on the SD card.
+Insert SD card into a slot and power the board. First boot takes around 3 minutes then it reboots and you will need to wait another one minute to login. This delay is because system updates package list and creates 128Mb emergency SWAP on the SD card.
 
 Normal boot (with DHCP) takes up to 35 seconds with a class 6 SD CARD and cheapest board.
 
@@ -42,17 +66,21 @@ and change the autologin user.
 
 # How to update kernel?
 
-For Armbian 4.2 and newer.
-
 	apt-get update
 	apt-get upgrade
 	reboot
-	
-For all other cases. Note that this procedure upgrades only kernel with hardware definitions (bin, dtb, firmware and headers. Operating system and modifications remain as is.
 
+Working on Armbian 4.2 and newer.
+
+# How to upgrade kernel?
+
+If you are running **legacy kernel** and you want to switch to **vanilla**, **development** or vice versa, you can do it this way:
+	
 	wget -q -O - http://upgrade.armbian.com | bash
 
-You will be prompted to select and confirm some actions. It's possible to upgrade **from any other distribution**.
+You will be prompted to select and confirm some actions. It's possible to upgrade **from any other distribution**. Note that this procedure upgrades only kernel with hardware definitions (bin, dtb, firmware and headers. Operating system and modifications remain as is.
+
+Check [this for manual way](http://www.armbian.com/kernel/) and more info.
 
 [su_youtube_advanced url="https:\/\/youtu.be\/iPAlPW3sv3I" controls="yes" showinfo="no" loop="yes" rel="no" modestbranding="yes"]
 
@@ -130,6 +158,10 @@ system language:
 
 	dpkg-reconfigure locales
 
+console font, codepage:
+
+	dpkg-reconfigure console-setup
+
 time zone: 
 
 	dpkg-reconfigure tzdata
@@ -169,7 +201,7 @@ Other modes:
 
 Some boards allow to adjust CPU speed.
 
-	nano /etc/init.d/cpufrequtils
+	nano /etc/default/cpufrequtils
 
 Alter **min_speed** or **max_speed** variable.
 
